@@ -49,6 +49,9 @@ services:
       - N8N_PERSONALIZATION_ENABLED=false
       - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
       - N8N_USER_MANAGEMENT_JWT_SECRET=${N8N_USER_MANAGEMENT_JWT_SECRET}
+      - N8N_METRICS=true
+      - N8N_HIRING_THROTTLE_MAX=50
+      - N8N_HIRING_THROTTLE_TIME=2000
     deploy:
       resources:
         limits:
@@ -76,6 +79,18 @@ services:
         limits:
           cpus: '1'
           memory: 2G
+    command: 
+      - "postgres"
+      - "-c"
+      - "max_connections=200"
+      - "-c"
+      - "shared_buffers=512MB"
+      - "-c"
+      - "effective_cache_size=1536MB"
+      - "-c"
+      - "work_mem=2621kB"
+      - "-c"
+      - "maintenance_work_mem=128MB"
     volumes:
       - postgres_storage:/var/lib/postgresql/data
     healthcheck:
@@ -135,11 +150,19 @@ services:
     profiles: ["cpu"]
     <<: *service-ollama
     container_name: ollama-cpu
+    environment:
+      - OLLAMA_MODELS_PATH=/models
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_CONCURRENT_SLOTS=5
 
   ollama-gpu:
     profiles: ["gpu-nvidia"]
     <<: *service-ollama
     container_name: ollama-gpu
+    environment:
+      - OLLAMA_MODELS_PATH=/models
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_CONCURRENT_SLOTS=5
     deploy:
       resources:
         reservations:
